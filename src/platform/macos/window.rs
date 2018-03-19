@@ -13,7 +13,7 @@ use objc::declare::ClassDecl;
 use cocoa;
 use cocoa::base::{id, nil};
 use cocoa::foundation::{NSPoint, NSRect, NSSize, NSString, NSUInteger};
-use cocoa::appkit::{self, NSApplication, NSColor, NSView, NSWindow, NSWindowStyleMask};
+use cocoa::appkit::{self, NSApplication, NSColor, NSView, NSWindow, NSWindowStyleMask, NSWindowButton};
 
 use core_graphics::display::CGDisplay;
 
@@ -257,6 +257,8 @@ pub struct PlatformSpecificWindowBuilderAttributes {
     pub movable_by_window_background: bool,
     pub titlebar_transparent: bool,
     pub title_hidden: bool,
+    pub titlebar_hidden: bool,
+    pub titlebar_buttons_hidden: bool,
     pub fullsize_content_view: bool,
 }
 
@@ -435,6 +437,9 @@ impl Window2 {
                     NSWindowStyleMask::NSMiniaturizableWindowMask |
                     NSWindowStyleMask::NSResizableWindowMask |
                     NSWindowStyleMask::NSFullSizeContentViewWindowMask
+            } else if pl_attrs.titlebar_hidden {
+                NSWindowStyleMask::NSBorderlessWindowMask |
+                    NSWindowStyleMask::NSResizableWindowMask
             } else if !pl_attrs.titlebar_transparent {
                 // Window2 with a titlebar
                 NSWindowStyleMask::NSClosableWindowMask |
@@ -473,6 +478,16 @@ impl Window2 {
                 }
                 if pl_attrs.title_hidden {
                     window.setTitleVisibility_(appkit::NSWindowTitleVisibility::NSWindowTitleHidden);
+                }
+                if pl_attrs.titlebar_buttons_hidden {
+                    let button = window.standardWindowButton_(NSWindowButton::NSWindowFullScreenButton);
+                    msg_send![button, setHidden:YES];
+                    let button = window.standardWindowButton_(NSWindowButton::NSWindowMiniaturizeButton);
+                    msg_send![button, setHidden:YES];
+                    let button = window.standardWindowButton_(NSWindowButton::NSWindowCloseButton);
+                    msg_send![button, setHidden:YES];
+                    let button = window.standardWindowButton_(NSWindowButton::NSWindowZoomButton);
+                    msg_send![button, setHidden:YES];
                 }
                 if pl_attrs.movable_by_window_background {
                     window.setMovableByWindowBackground_(YES);
